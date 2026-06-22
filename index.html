@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATM Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;600;700&display=swap');
+
+    :root {
+      --primary-color: #4CAF50;
+      /* Green */
+      --secondary-color: #2196F3;
+      /* Blue */
+      --danger-color: #F44336;
+      /* Red */
+      --text-color: #333;
+      --bg-color: #f0f2f5;
+      --card-bg: #ffffff;
+      --border-color: #ddd;
+      --shadow-light: rgba(0, 0, 0, 0.1);
+      --shadow-medium: rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-color);
+      overflow: hidden;
+      /* Prevent scroll during transitions */
+    }
+
+    .anton-font {
+      font-family: 'Anton', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .poppins-font {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .atm-container {
+      background-color: var(--card-bg);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px var(--shadow-medium);
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 500px;
+      /* Ensure consistent height */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      /* Align items to the start to allow scrolling */
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+      transform: translateX(0);
+      background-color: var(--card-bg);
+      /* Ensure background for smooth transition */
+      border-radius: 15px;
+      overflow-y: auto;
+      /* Enable vertical scrolling */
+      padding-bottom: 5px;
+      /* Add some padding at the bottom for content */
+    }
+
+    /* Hide scrollbar for Webkit browsers (Chrome, Safari) */
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hide scrollbar for Firefox */
+    .screen {
+      scrollbar-width: none;
+      /* Firefox */
+    }
+
+
+    .screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(100%);
+      /* Slide out to the right */
+    }
+
+    .screen.active {
+      transform: translateX(0);
+      /* Slide in from the right */
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .screen h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: var(--primary-color);
+    }
+
+    .screen h2 {
+      font-size: 2em;
+      margin-bottom: 25px;
+      color: var(--primary-color);
+    }
+
+    .screen p {
+      font-size: 1.1em;
+      margin-bottom: 20px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 20px;
+    }
+
+    .dashboard-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      width: 100%;
+      /* Ensure it takes full width of its container */
+      max-width: none;
+      /* Remove max-width constraint */
+      margin-bottom: 20px;
+      /* Add space before logout button */
+    }
+
+    .quick-withdraw-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      max-width: none;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 8px var(--shadow-light);
+    }
+
+    button:hover {
+      background-color: #45a049;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px var(--shadow-medium);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px var(--shadow-light);
+    }
+
+    .secondary-btn {
+      background-color: var(--secondary-color);
+    }
+
+    .secondary-btn:hover {
+      background-color: #1e88e5;
+    }
+
+    .danger-btn {
+      background-color: var(--danger-color);
+    }
+
+    .danger-btn:hover {
+      background-color: #d32f2f;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 300px;
+      margin-top: 20px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+      padding: 12px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1em;
+      width: 100%;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+
+    .message {
+      margin-top: 15px;
+      font-weight: 600;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .message.success {
+      color: var(--primary-color);
+    }
+
+    .message.error {
+      color: var(--danger-color);
+    }
+
+    .account-summary {
+      background-color: #e8f5e9;
+      /* Light green */
+      border: 1px solid var(--primary-color);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 25px;
+      width: 100%;
+      max-width: 350px;
+      box-shadow: 0 4px 10px var(--shadow-light);
+    }
+
+    .account-summary h3 {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+
+    .balance-amount {
+      font-size: 2.2em;
+      font-weight: 700;
+      color: var(--primary-color);
+      letter-spacing: 1px;
+    }
+
+    .transaction-list {
+      background-color: #f9f9f9;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 250px;
+      overflow-y: auto;
+      width: 100%;
+      text-align: left;
+      margin-bottom: 20px;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .transaction-item {
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95em;
+    }
+
+    .transaction-item:last-child {
+      border-bottom: none;
+    }
+
+    .transaction-item .type {
+      font-weight: 600;
+    }
+
+    .transaction-item .amount.deposit {
+      color: var(--primary-color);
+    }
+
+    .transaction-item .amount.withdraw,
+    .transaction-item .amount.transfer-out {
+      color: var(--danger-color);
+    }
+
+    .transaction-item .amount.transfer-in {
+      color: var(--secondary-color);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideInFromRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOutToRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .atm-container {
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .screen h1 {
+        font-size: 2em;
+      }
+
+      .screen h2 {
+        font-size: 1.8em;
+      }
+
+      button {
+        padding: 12px 20px;
+        font-size: 1em;
+      }
+
+      input {
+        padding: 10px 12px;
+        font-size: 0.95em;
+      }
+
+      .dashboard-buttons,
+      .quick-withdraw-options {
+        grid-template-columns: 1fr;
+        /* Stack buttons on small screens */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="atm-container">
+    <div class="screen" id="initialScreen">
+      <h1 class="anton-font">Welcome to ATM</h1>
+      <p class="poppins-font">Please choose an option:</p>
+      <div class="button-group">
+        <button id="signInBtn" class="poppins-font">Sign In</button>
+        <button id="signUpBtn" class="poppins-font">Sign Up</button>
+      </div>
+    </div>
+
+    <div class="screen hidden" id="loginScreen">
+      <h2 class="anton-font">Sign In</h2>
+      <form id="loginForm">
+        <input type="text" id="loginUsername" placeholder="Username" required class="poppins-font">
+        <input type="password" id="loginPassword" placeholder="Password" required class="poppins-font">
+        <button type="submit" class="poppins-font">Login</button>
+        <button type="button" id="backToInitialFromLogin" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="loginMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="signUpScreen">
+      <h2 class="anton-font">Sign Up</h2>
+      <form id="signUpForm">
+        <input type="text" id="signUpUsername" placeholder="Username" required class="poppins-font">
+        <input type="password" id="signUpPassword" placeholder="Password" required class="poppins-font">
+        <input type="password" id="signUpConfirmPassword" placeholder="Confirm Password" required class="poppins-font">
+        <button type="submit" class="poppins-font">Register</button>
+        <button type="button" id="backToInitialFromSignUp" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="signUpMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="dashboardScreen">
+      <h2 class="anton-font">Welcome, <span id="dashboardUsername"></span>!</h2>
+      <div class="account-summary poppins-font">
+        <h3>Current Balance:</h3>
+        <p class="balance-amount" id="currentBalance">$0.00</p>
+      </div>
+      <div class="button-group dashboard-buttons">
+        <button id="depositBtn" class="poppins-font">Deposit</button>
+        <button id="withdrawBtn" class="poppins-font">Withdraw</button>
+        <button id="historyBtn" class="poppins-font">Transaction History</button>
+        <button id="changePasswordBtn" class="poppins-font">Change Password</button>
+        <button id="transferBtn" class="poppins-font">Transfer Funds</button>
+        <button id="quickWithdrawBtn" class="poppins-font">Quick Withdraw</button>
+        <button id="interestBtn" class="poppins-font">Calculate Interest</button>
+        <button id="deactivateAccountBtn" class="poppins-font danger-btn">Deactivate Account</button>
+        <button id="logoutBtn" class="poppins-font secondary-btn">Logout</button>
+      </div>
+    </div>
+
+    <div class="screen hidden" id="depositScreen">
+      <h2 class="anton-font">Deposit Funds</h2>
+      <form id="depositForm">
+        <input type="number" id="depositAmount" placeholder="Amount" min="1" required class="poppins-font">
+        <button type="submit" class="poppins-font">Deposit</button>
+        <button type="button" id="backToDashboardFromDeposit" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="depositMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="withdrawScreen">
+      <h2 class="anton-font">Withdraw Funds</h2>
+      <form id="withdrawForm">
+        <input type="number" id="withdrawAmount" placeholder="Amount" min="1" required class="poppins-font">
+        <button type="submit" class="poppins-font">Withdraw</button>
+        <button type="button" id="backToDashboardFromWithdraw" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="withdrawMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="quickWithdrawScreen">
+      <h2 class="anton-font">Quick Withdraw</h2>
+      <div class="button-group quick-withdraw-options">
+        <button data-amount="20" class="poppins-font quick-withdraw-btn">$20</button>
+        <button data-amount="50" class="poppins-font quick-withdraw-btn">$50</button>
+        <button data-amount="100" class="poppins-font quick-withdraw-btn">$100</button>
+        <button data-amount="200" class="poppins-font quick-withdraw-btn">$200</button>
+      </div>
+      <button type="button" id="backToDashboardFromQuickWithdraw" class="poppins-font secondary-btn" style="margin-top: 20px;">Back</button>
+      <p id="quickWithdrawMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="historyScreen">
+      <h2 class="anton-font">Transaction History</h2>
+      <div class="transaction-list poppins-font" id="transactionList">
+        <p>No transactions yet.</p>
+      </div>
+      <button type="button" id="backToDashboardFromHistory" class="poppins-font secondary-btn">Back</button>
+    </div>
+
+    <div class="screen hidden" id="changePasswordScreen">
+      <h2 class="anton-font">Change Password</h2>
+      <form id="changePasswordForm">
+        <input type="password" id="currentPassword" placeholder="Current Password" required class="poppins-font">
+        <input type="password" id="newPassword" placeholder="New Password" required class="poppins-font">
+        <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" required class="poppins-font">
+        <button type="submit" class="poppins-font">Change Password</button>
+        <button type="button" id="backToDashboardFromChangePassword" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="changePasswordMessage" class="message poppins-font"></p>
+    </div>
+
+    <div class="screen hidden" id="transferScreen">
+      <h2 class="anton-font">Transfer Funds</h2>
+      <form id="transferForm">
+        <input type="text" id="transferRecipient" placeholder="Recipient Username" required class="poppins-font">
+        <input type="number" id="transferAmount" placeholder="Amount" min="1" required class="poppins-font">
+        <button type="submit" class="poppins-font">Transfer</button>
+        <button type="button" id="backToDashboardFromTransfer" class="poppins-font secondary-btn">Back</button>
+      </form>
+      <p id="transferMessage" class="message poppins-font"></p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const screens = document.querySelectorAll('.screen');
+      const initialScreen = document.getElementById('initialScreen');
+      const loginScreen = document.getElementById('loginScreen');
+      const signUpScreen = document.getElementById('signUpScreen');
+      const dashboardScreen = document.getElementById('dashboardScreen');
+      const depositScreen = document.getElementById('depositScreen');
+      const withdrawScreen = document.getElementById('withdrawScreen');
+      const historyScreen = document.getElementById('historyScreen');
+      const changePasswordScreen = document.getElementById('changePasswordScreen');
+      const transferScreen = document.getElementById('transferScreen');
+      const quickWithdrawScreen = document.getElementById('quickWithdrawScreen');
+
+      // Buttons
+      const signInBtn = document.getElementById('signInBtn');
+      const signUpBtn = document.getElementById('signUpBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const depositBtn = document.getElementById('depositBtn');
+      const withdrawBtn = document.getElementById('withdrawBtn');
+      const historyBtn = document.getElementById('historyBtn');
+      const changePasswordBtn = document.getElementById('changePasswordBtn');
+      const transferBtn = document.getElementById('transferBtn');
+      const quickWithdrawBtn = document.getElementById('quickWithdrawBtn');
+      const interestBtn = document.getElementById('interestBtn');
+      const deactivateAccountBtn = document.getElementById('deactivateAccountBtn');
+
+      // Forms
+      const loginForm = document.getElementById('loginForm');
+      const signUpForm = document.getElementById('signUpForm');
+      const depositForm = document.getElementById('depositForm');
+      const withdrawForm = document.getElementById('withdrawForm');
+      const changePasswordForm = document.getElementById('changePasswordForm');
+      const transferForm = document.getElementById('transferForm');
+
+      // Inputs
+      const loginUsernameInput = document.getElementById('loginUsername');
+      const loginPasswordInput = document.getElementById('loginPassword');
+      const signUpUsernameInput = document.getElementById('signUpUsername');
+      const signUpPasswordInput = document.getElementById('signUpPassword');
+      const signUpConfirmPasswordInput = document.getElementById('signUpConfirmPassword');
+      const depositAmountInput = document.getElementById('depositAmount');
+      const withdrawAmountInput = document.getElementById('withdrawAmount');
+      const currentPasswordInput = document.getElementById('currentPassword');
+      const newPasswordInput = document.getElementById('newPassword');
+      const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+      const transferRecipientInput = document.getElementById('transferRecipient');
+      const transferAmountInput = document.getElementById('transferAmount');
+
+      // Display elements
+      const dashboardUsername = document.getElementById('dashboardUsername');
+      const currentBalanceDisplay = document.getElementById('currentBalance');
+      const transactionList = document.getElementById('transactionList');
+
+      // Messages
+      const loginMessage = document.getElementById('loginMessage');
+      const signUpMessage = document.getElementById('signUpMessage');
+      const depositMessage = document.getElementById('depositMessage');
+      const withdrawMessage = document.getElementById('withdrawMessage');
+      const changePasswordMessage = document.getElementById('changePasswordMessage');
+      const transferMessage = document.getElementById('transferMessage');
+      const quickWithdrawMessage = document.getElementById('quickWithdrawMessage');
+
+      // Back buttons
+      document.querySelectorAll('[id^="backToDashboardFrom"]').forEach(btn => {
+        btn.addEventListener('click', () => showScreen(dashboardScreen));
+      });
+      document.getElementById('backToInitialFromLogin').addEventListener('click', () => showScreen(initialScreen));
+      document.getElementById('backToInitialFromSignUp').addEventListener('click', () => showScreen(initialScreen));
+
+      let users = JSON.parse(localStorage.getItem('atmUsers')) || {};
+      let loggedInUser = localStorage.getItem('loggedInUser');
+
+      // --- Helper Functions ---
+      function showScreen(screenToShow) {
+        screens.forEach(screen => {
+          if (screen === screenToShow) {
+            screen.classList.remove('hidden');
+            screen.classList.add('active');
+          } else {
+            screen.classList.remove('active');
+            screen.classList.add('hidden');
+          }
+        });
+        // Clear messages when switching screens
+        document.querySelectorAll('.message').forEach(msg => {
+          msg.textContent = '';
+          msg.classList.remove('success', 'error');
+        });
+      }
+
+      function updateLocalStorage() {
+        localStorage.setItem('atmUsers', JSON.stringify(users));
+        localStorage.setItem('loggedInUser', loggedInUser);
+      }
+
+      function displayMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `message ${type}`;
+        setTimeout(() => {
+          element.textContent = '';
+          element.className = 'message';
+        }, 3000); // Clear message after 3 seconds
+      }
+
+      function updateDashboard() {
+        if (loggedInUser && users[loggedInUser]) {
+          dashboardUsername.textContent = loggedInUser;
+          currentBalanceDisplay.textContent = `$${users[loggedInUser].balance.toFixed(2)}`;
+        }
+      }
+
+      function addTransaction(type, amount, recipient = null) {
+        if (loggedInUser && users[loggedInUser]) {
+          const transaction = {
+            id: Date.now(),
+            type: type,
+            amount: amount,
+            date: new Date().toLocaleString(),
+            recipient: recipient
+          };
+          users[loggedInUser].transactions.unshift(transaction); // Add to the beginning
+          updateLocalStorage();
+        }
+      }
+
+      // --- Initial Load ---
+      if (loggedInUser && users[loggedInUser]) {
+        showScreen(dashboardScreen);
+        updateDashboard();
+      } else {
+        showScreen(initialScreen);
+      }
+
+      // --- Event Listeners ---
+
+      // Initial Screen Buttons
+      signInBtn.addEventListener('click', () => showScreen(loginScreen));
+      signUpBtn.addEventListener('click', () => showScreen(signUpScreen));
+
+      // Login Form Submission
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = loginUsernameInput.value.trim();
+        const password = loginPasswordInput.value.trim();
+
+        if (users[username] && users[username].password === password) {
+          loggedInUser = username;
+          updateLocalStorage();
+          updateDashboard();
+          showScreen(dashboardScreen);
+          displayMessage(loginMessage, 'Login successful!', 'success');
+          loginForm.reset();
+        } else {
+          displayMessage(loginMessage, 'Invalid username or password.', 'error');
+        }
+      });
+
+      // Sign Up Form Submission
+      signUpForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = signUpUsernameInput.value.trim();
+        const password = signUpPasswordInput.value.trim();
+        const confirmPassword = signUpConfirmPasswordInput.value.trim();
+
+        if (username.length < 3) {
+          displayMessage(signUpMessage, 'Username must be at least 3 characters long.', 'error');
+          return;
+        }
+        if (password.length < 6) {
+          displayMessage(signUpMessage, 'Password must be at least 6 characters long.', 'error');
+          return;
+        }
+        if (password !== confirmPassword) {
+          displayMessage(signUpMessage, 'Passwords do not match.', 'error');
+          return;
+        }
+        if (users[username]) {
+          displayMessage(signUpMessage, 'Username already exists.', 'error');
+          return;
+        }
+
+        users[username] = {
+          password: password,
+          balance: 0,
+          transactions: []
+        };
+        loggedInUser = username;
+        updateLocalStorage();
+        updateDashboard();
+        showScreen(dashboardScreen);
+        displayMessage(signUpMessage, 'Account created and logged in!', 'success');
+        signUpForm.reset();
+      });
+
+      // Logout
+      logoutBtn.addEventListener('click', () => {
+        loggedInUser = null;
+        updateLocalStorage();
+        showScreen(initialScreen);
+        displayMessage(loginMessage, 'Logged out successfully.', 'success'); // Display on login screen
+      });
+
+      // Deposit
+      depositBtn.addEventListener('click', () => showScreen(depositScreen));
+      depositForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const amount = parseFloat(depositAmountInput.value);
+
+        if (isNaN(amount) || amount <= 0) {
+          displayMessage(depositMessage, 'Please enter a valid amount.', 'error');
+          return;
+        }
+
+        users[loggedInUser].balance += amount;
+        addTransaction('deposit', amount);
+        updateDashboard();
+        displayMessage(depositMessage, `Successfully deposited $${amount.toFixed(2)}.`, 'success');
+        depositForm.reset();
+        setTimeout(() => showScreen(dashboardScreen), 1500); // Go back to dashboard after a short delay
+      });
+
+      // Withdraw
+      withdrawBtn.addEventListener('click', () => showScreen(withdrawScreen));
+      withdrawForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const amount = parseFloat(withdrawAmountInput.value);
+
+        if (isNaN(amount) || amount <= 0) {
+          displayMessage(withdrawMessage, 'Please enter a valid amount.', 'error');
+          return;
+        }
+        if (amount > users[loggedInUser].balance) {
+          displayMessage(withdrawMessage, 'Insufficient funds.', 'error');
+          return;
+        }
+
+        users[loggedInUser].balance -= amount;
+        addTransaction('withdraw', amount);
+        updateDashboard();
+        displayMessage(withdrawMessage, `Successfully withdrew $${amount.toFixed(2)}.`, 'success');
+        withdrawForm.reset();
+        setTimeout(() => showScreen(dashboardScreen), 1500);
+      });
+
+      // Quick Withdraw
+      quickWithdrawBtn.addEventListener('click', () => showScreen(quickWithdrawScreen));
+      document.querySelectorAll('.quick-withdraw-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const amount = parseFloat(e.target.dataset.amount);
+          if (amount > users[loggedInUser].balance) {
+            displayMessage(quickWithdrawMessage, 'Insufficient funds for this quick withdrawal.', 'error');
+            return;
+          }
+          users[loggedInUser].balance -= amount;
+          addTransaction('withdraw', amount);
+          updateDashboard();
+          displayMessage(quickWithdrawMessage, `Successfully withdrew $${amount.toFixed(2)}.`, 'success');
+          setTimeout(() => showScreen(dashboardScreen), 1500);
+        });
+      });
+
+      // Transaction History
+      historyBtn.addEventListener('click', () => {
+        showScreen(historyScreen);
+        transactionList.innerHTML = ''; // Clear previous list
+
+        if (users[loggedInUser].transactions.length === 0) {
+          transactionList.innerHTML = '<p>No transactions yet.</p>';
+          return;
+        }
+
+        users[loggedInUser].transactions.forEach(transaction => {
+          const item = document.createElement('div');
+          item.classList.add('transaction-item');
+          let amountClass = '';
+          let typeText = '';
+
+          if (transaction.type === 'deposit') {
+            amountClass = 'deposit';
+            typeText = 'Deposit';
+          } else if (transaction.type === 'withdraw') {
+            amountClass = 'withdraw';
+            typeText = 'Withdrawal';
+          } else if (transaction.type === 'transfer-out') {
+            amountClass = 'transfer-out';
+            typeText = `Transfer to ${transaction.recipient}`;
+          } else if (transaction.type === 'transfer-in') {
+            amountClass = 'transfer-in';
+            typeText = `Transfer from ${transaction.recipient}`;
+          } else if (transaction.type === 'interest') {
+            amountClass = 'deposit'; // Interest is like a deposit
+            typeText = 'Interest Earned';
+          }
+
+          item.innerHTML = `
+                <span class="type">${typeText}</span>
+                <span class="amount ${amountClass}">${transaction.type === 'withdraw' || transaction.type === 'transfer-out' ? '-' : '+'}$${transaction.amount.toFixed(2)}</span>
+                <span class="date">${transaction.date}</span>
+            `;
+          transactionList.appendChild(item);
+        });
+      });
+
+      // Change Password
+      changePasswordBtn.addEventListener('click', () => showScreen(changePasswordScreen));
+      changePasswordForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const currentPassword = currentPasswordInput.value.trim();
+        const newPassword = newPasswordInput.value.trim();
+        const confirmNewPassword = confirmNewPasswordInput.value.trim();
+
+        if (currentPassword !== users[loggedInUser].password) {
+          displayMessage(changePasswordMessage, 'Current password is incorrect.', 'error');
+          return;
+        }
+        if (newPassword.length < 6) {
+          displayMessage(changePasswordMessage, 'New password must be at least 6 characters long.', 'error');
+          return;
+        }
+        if (newPassword !== confirmNewPassword) {
+          displayMessage(changePasswordMessage, 'New passwords do not match.', 'error');
+          return;
+        }
+        if (newPassword === currentPassword) {
+          displayMessage(changePasswordMessage, 'New password cannot be the same as the current password.', 'error');
+          return;
+        }
+
+        users[loggedInUser].password = newPassword;
+        updateLocalStorage();
+        displayMessage(changePasswordMessage, 'Password changed successfully!', 'success');
+        changePasswordForm.reset();
+        setTimeout(() => showScreen(dashboardScreen), 1500);
+      });
+
+      // Transfer Funds
+      transferBtn.addEventListener('click', () => showScreen(transferScreen));
+      transferForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const recipient = transferRecipientInput.value.trim();
+        const amount = parseFloat(transferAmountInput.value);
+
+        if (isNaN(amount) || amount <= 0) {
+          displayMessage(transferMessage, 'Please enter a valid amount.', 'error');
+          return;
+        }
+        if (amount > users[loggedInUser].balance) {
+          displayMessage(transferMessage, 'Insufficient funds.', 'error');
+          return;
+        }
+        if (!users[recipient]) {
+          displayMessage(transferMessage, 'Recipient username not found.', 'error');
+          return;
+        }
+        if (recipient === loggedInUser) {
+          displayMessage(transferMessage, 'Cannot transfer to yourself.', 'error');
+          return;
+        }
+
+        users[loggedInUser].balance -= amount;
+        users[recipient].balance += amount;
+
+        addTransaction('transfer-out', amount, recipient);
+        users[recipient].transactions.unshift({
+          id: Date.now(),
+          type: 'transfer-in',
+          amount: amount,
+          date: new Date().toLocaleString(),
+          recipient: loggedInUser
+        });
+
+        updateLocalStorage();
+        updateDashboard();
+        displayMessage(transferMessage, `Successfully transferred $${amount.toFixed(2)} to ${recipient}.`, 'success');
+        transferForm.reset();
+        setTimeout(() => showScreen(dashboardScreen), 1500);
+      });
+
+      // Calculate Interest
+      interestBtn.addEventListener('click', () => {
+        if (loggedInUser && users[loggedInUser]) {
+          const interestRate = 0.005; // 0.5% interest
+          const interestAmount = users[loggedInUser].balance * interestRate;
+          if (interestAmount > 0) {
+            users[loggedInUser].balance += interestAmount;
+            addTransaction('interest', interestAmount);
+            updateDashboard();
+            displayMessage(quickWithdrawMessage, `Earned $${interestAmount.toFixed(2)} in interest!`, 'success');
+          } else {
+            displayMessage(quickWithdrawMessage, 'Balance too low to earn significant interest.', 'error');
+          }
+        }
+      });
+
+      // Deactivate Account
+      deactivateAccountBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to deactivate your account? This action cannot be undone.')) {
+          delete users[loggedInUser];
+          loggedInUser = null;
+          updateLocalStorage();
+          showScreen(initialScreen);
+          displayMessage(loginMessage, 'Account deactivated successfully.', 'success');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
